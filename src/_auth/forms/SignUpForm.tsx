@@ -5,7 +5,6 @@ import { Link } from "react-router-dom"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -17,8 +16,14 @@ import { useForm } from "react-hook-form"
 import { signUpValidation } from "@/lib/validations"
 import { Loader } from "@/components/shared/Loader"
 import { createUserAccount } from "@/lib/appwrite/api"
+import { useToast } from "@/hooks/use-toast"
+
+
 
 const SignUpForm = () => {
+
+  const { toast } = useToast();
+
   const isLoading = false
 
   // 1. Define your form.
@@ -37,7 +42,13 @@ const SignUpForm = () => {
     // Create a user
     const newUser = await createUserAccount(values);
 
-    console.log(newUser)
+    if (!newUser) {
+      return toast({
+        title: "Fallo al registrarse. Intente de nuevo."
+      });
+    }
+
+    // const session = await signAccount();
   }
 
   return (
