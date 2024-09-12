@@ -59,7 +59,7 @@ const SignUpForm = () => {
 
     if (!session) {
       return toast({
-        title: 'Inicio de sesión fallido. Intente de nuevo.'
+        title: 'Registro fallido. Intente de nuevo.'
       });
     }
 
