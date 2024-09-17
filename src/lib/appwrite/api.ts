@@ -108,6 +108,8 @@ export async function createPost(post: INewPost) {
     // Convert tags to an array
     const tags = post.tags?.replace(/ /g, '').split(',');
 
+    console.log(fileUrl)
+
     // Save post to database
     const newPost = await databases.createDocument(
       appwriteConfig.databaseId,
@@ -123,6 +125,8 @@ export async function createPost(post: INewPost) {
       }
     )
 
+    console.log(newPost)
+
     if(!newPost) {
       await deleteFile(uploadedFile.$id);
       throw Error;
@@ -136,19 +140,19 @@ export async function createPost(post: INewPost) {
 
 export async function uploadFile(file: File) {
   try {
-    const uploadFile = await storage.createFile(
+    const uploadedFile = await storage.createFile(
       appwriteConfig.storageId,
       ID.unique(),
       file
     );
 
-    return uploadFile;
+    return uploadedFile;
   } catch (error) {
     console.error(error);
   }
 }
 
-export async function getFilePreview(fileId: string) {
+export function getFilePreview(fileId: string) {
   try {
     const fileUrl = storage.getFilePreview(
       appwriteConfig.storageId,
@@ -158,6 +162,10 @@ export async function getFilePreview(fileId: string) {
       ImageGravity.Top,
       100,
     )
+
+    if (!fileUrl) throw Error;
+
+    return fileUrl;
   } catch (error) {
     console.error(error);
   }
@@ -167,8 +175,20 @@ export async function deleteFile(fileId: string) {
   try {
     await storage.deleteFile(appwriteConfig.storageId, fileId);
     
-    return { status: 'ok' }
+    return { status: "ok" };
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
+}
+
+export async function getRecentPosts() {
+  const posts = databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.postCollectionId,
+    [Query.orderDesc('$createdAt'), Query.limit(20)]
+  )
+
+  if (!posts) throw Error;
+
+  return posts;
 }
