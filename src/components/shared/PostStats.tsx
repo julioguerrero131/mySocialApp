@@ -1,4 +1,3 @@
-import { useUserContext } from "@/context/AuthContext";
 import { useDeleteSavePost, useGetCurrentUser, useLikePost, useSavePost } from "@/lib/react-query/queriesAndMutations";
 import { checkIsLiked } from "@/lib/utils";
 import { Models } from "appwrite"
@@ -6,12 +5,12 @@ import { useEffect, useState } from "react";
 import { Loader } from "./Loader";
 
 type PopStatsProps = {
-  post: Models.Document;
+  post?: Models.Document;
   userId: string;
 }
 
 const PostStats = ({ post, userId }: PopStatsProps) => {
-  const likesList = post.likes.map((user: Models.Document) => user.$id);
+  const likesList = post?.likes.map((user: Models.Document) => user.$id);
 
   const [likes, setLikes] = useState(likesList);
   const [isSaved, setIsSaved] = useState(false);
@@ -23,7 +22,7 @@ const PostStats = ({ post, userId }: PopStatsProps) => {
   const { data: currentUser } = useGetCurrentUser();
 
   const savedPostRecord = currentUser?.save.find(
-    (record: Models.Document) => record.post.$id === post.$id
+    (record: Models.Document) => record.post.$id === post?.$id
   );
 
   useEffect(() => {
@@ -43,7 +42,7 @@ const PostStats = ({ post, userId }: PopStatsProps) => {
     }
 
     setLikes(newLikes);
-    likePost({ postId: post.$id, likesArray: newLikes })
+    likePost({ postId: post?.$id || '', likesArray: newLikes })
   }
 
   const handleSavePost = (e: React.MouseEvent) => {
@@ -53,7 +52,7 @@ const PostStats = ({ post, userId }: PopStatsProps) => {
       setIsSaved(false);
       deleteSavePost(savedPostRecord.$id);
     } else {
-      savePost({ postId: post.$id, userId });
+      savePost({ postId: post?.$id || '', userId });
       setIsSaved(true);
     }
 
