@@ -17,16 +17,20 @@ import { Input } from "../ui/input"
 import { PostValidation } from "@/lib/validations"
 import { Models } from "appwrite"
 import { useUserContext } from "@/context/AuthContext"
-import { toast, useToast } from "../hooks/use-toast"
+import { useToast } from "../hooks/use-toast"
 import { useNavigate } from "react-router-dom"
-import { useCreatePost } from "@/lib/react-query/queriesAndMutations"
+import { useCreatePost, useUpdatePost } from "@/lib/react-query/queriesAndMutations"
+import { Loader } from "../shared/Loader"
 
 type PostFormProps = {
   post?: Models.Document;
+  action: 'create' | 'update';
 }
 
-const PostForm = ({ post }: PostFormProps) => {
+const PostForm = ({ post, action }: PostFormProps) => {
   const { mutateAsync: createPost, isPending: isLoadingCreate } = useCreatePost();
+  const { mutateAsync: updatePost, isPending: isLoadingUpdate } = useUpdatePost();
+
   const { user } = useUserContext();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -38,14 +42,29 @@ const PostForm = ({ post }: PostFormProps) => {
       caption: post ? post?.caption: "",
       file: [],
       location: post ? post?.location: "",
-      tags: post ? post?.tags.join(','): "" 
+      tags: post ? post?.tags.join(','): "",
     },
   })
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof PostValidation>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
+    if(post && action === 'update') {
+      const updatedPost = await updatePost({
+        ...values,
+        postId: post.$id,
+        imageId: post?.imageId,
+        imageUrl: post?.imageUrl,
+      })
+
+      if(!updatedPost) {
+        toast({
+          title: 'Intenta de nuevo. Actualización Fallida.'
+        })
+      }
+
+      return navigate(`/posts/${post.$id}`);
+    }
+
     const newPost = await createPost({
       ...values,
       userId: user.id,
@@ -53,7 +72,7 @@ const PostForm = ({ post }: PostFormProps) => {
 
     if (!newPost) {
       toast({
-        title: 'Intenta de nuevo'
+        title: 'Intenta de nuevo. Creación Fallida.'
       })
     }
 
@@ -143,12 +162,13 @@ const PostForm = ({ post }: PostFormProps) => {
             type="button" 
             className="shad-button_dark_4"
           >
-            Cancel
+            Cancelar
           </Button>
           <Button 
             type="submit" className="shad-button_primary whitespace-nowrap"
           >
-            Submit
+            {isLoadingCreate || isLoadingUpdate && <Loader />}
+            {action=='create'? 'Crear': 'Actualizar'} Post
           </Button>
         </div>
 
